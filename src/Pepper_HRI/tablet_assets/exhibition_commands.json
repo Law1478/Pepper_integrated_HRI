@@ -1,29 +1,43 @@
 {
     "walking_robot_exhibit": {
+    "id": 1,
+    "label": "Walking Robot",
     "text_file": "exhibition_explanation/walking_robot_exhibit_explanation.txt",
     "image_folder": "exhibition_images/walking_robot"
   },
     "combination_vault_exhibit": {
+    "id": 2,
+    "label": "Combination Vault",
     "text_file": "exhibition_explanation/combination_vault_exhibit_explanation.txt",
     "image_folder": "exhibition_images/combination_vault"
   },
   "LED_crystal_exhibit": {
+    "id": 3,
+    "label": "LED Crystal",
     "text_file": "exhibition_explanation/LED_crystal_exhibit_explanation.txt",
     "image_folder": "exhibition_images/LED_crystal"
   },
   "glowing_double_pendulum_exhibit": {
+    "id": 4,
+    "label": "Double Pendulum",
     "text_file": "exhibition_explanation/glowing_double_pendulum_exhibit_explanation.txt",
     "image_folder": "exhibition_images/double_pendulum"
   },
   "crane_exhibit": {
+    "id": 5,
+    "label": "Crane",
     "text_file": "exhibition_explanation/crane_exhibit_explanation.txt",
     "image_folder": "exhibition_images/crane"
   },
   "articulated_lamp_exhibit": {
+    "id": 6,
+    "label": "Articulate Lamp",
     "text_file": "exhibition_explanation/articulated_lamp_exhibit_explanation.txt",
     "image_folder": "exhibition_images/articulated_lamp"
   },
   "conclusion": {
+    "id": 7,
+    "label": "Conclusion",
     "text_file": "exhibition_explanation/conclusion.txt",
     "image_folder": "exhibition_images/conclusion_compilation"
   }
