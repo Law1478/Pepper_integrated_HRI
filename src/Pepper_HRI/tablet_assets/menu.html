@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #1a1a1a;
+            color: white;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            box-sizing: border-box;
+            padding: 40px;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* The 4-column grid that forms the "n" shape */
+        .n-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        /* Base button styling holding image + text */
+        .tour-btn {
+            background: #2a2a2a;
+            border: 3px solid #444;
+            border-radius: 16px;
+            min-height: 180px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tour-btn span {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+
+        .tour-btn small {
+            color: #b5b5b5;
+            font-size: 16px;
+            line-height: 1.35;
+            max-height: 66px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* Selected State */
+        .tour-btn.selected {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Positioning the lower legs of the "n" */
+        .pos-5 { grid-column: 1; } /* Row 2, Left leg */
+        .pos-6 { grid-column: 4; } /* Row 2, Right leg */
+
+        /* The massive Confirm Button container */
+        .footer-panel {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .confirm-btn {
+            width: 50%;
+            background: #00b0ff;
+            color: white;
+            border: none;
+            padding: 20px 0;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .confirm-btn:active {
+            transform: scale(0.98);
+            background: #0088cc;
+        }
+
+        .confirm-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .menu-status {
+            color: #cfcfcf;
+            font-size: 28px;
+            grid-column: 1 / -1;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-container">
+        <div class="n-grid" id="tourGrid">
+            <div class="menu-status">Loading tour waypoints...</div>
+        </div>
+
+        <div class="footer-panel">
+            <button class="confirm-btn" id="confirmBtn" disabled onclick="sendToRobot()">Confirm Tour</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedArtifacts = []; 
+
+        function setConfirmButtonState() {
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (selectedArtifacts.length > 0) {
+                confirmBtn.removeAttribute('disabled');
+            } else {
+                confirmBtn.setAttribute('disabled', 'true');
+            }
+        }
+
+        function renderWaypoints(waypoints) {
+            const grid = document.getElementById('tourGrid');
+            grid.innerHTML = '';
+            selectedArtifacts = [];
+            setConfirmButtonState();
+
+            if (waypoints.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'menu-status';
+                emptyState.textContent = 'No tour waypoints available';
+                grid.appendChild(emptyState);
+                return;
+            }
+
+            waypoints.forEach((waypoint, index) => {
+                const button = document.createElement('button');
+                button.className = 'tour-btn';
+                if (index === 4) button.classList.add('pos-5');
+                if (index === 5) button.classList.add('pos-6');
+                button.onclick = () => selectTour(waypoint.idx, button);
+
+                const name = document.createElement('span');
+                name.textContent = waypoint.name;
+                button.appendChild(name);
+
+                if (waypoint.description) {
+                    const description = document.createElement('small');
+                    description.textContent = waypoint.description;
+                    button.appendChild(description);
+                }
+
+                grid.appendChild(button);
+            });
+        }
+
+        async function loadWaypoints() {
+            try {
+                const response = await fetch('/tour_waypoints', { cache: "no-store" });
+                if (!response.ok) throw new Error(await response.text());
+
+                const data = await response.json();
+                renderWaypoints(data.waypoints || []);
+            } catch (error) {
+                const grid = document.getElementById('tourGrid');
+                grid.innerHTML = '';
+                const errorState = document.createElement('div');
+                errorState.className = 'menu-status';
+                errorState.textContent = 'Could not load tour waypoints';
+                grid.appendChild(errorState);
+                console.error("Failed to load tour waypoints", error);
+            }
+        }
+
+        function selectTour(artifactId, clickedBtn) {
+            const index = selectedArtifacts.indexOf(artifactId);
+
+            if (index > -1) {
+                // Already selected? Remove it from the list and turn off CSS styling
+                selectedArtifacts.splice(index, 1);
+                clickedBtn.classList.remove('selected');
+            } else {
+                // Not selected? Add it to the list and turn on CSS styling
+                selectedArtifacts.push(artifactId);
+                clickedBtn.classList.add('selected');
+            }
+
+            setConfirmButtonState();
+        }
+
+        async function sendToRobot() {
+            if (selectedArtifacts.length === 0) return;
+
+            const payload = { waypoints: selectedArtifacts };
+
+            try {
+                const response = await fetch('/tour_retrieve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    console.log("Dispatched array to /tour_retrieve:", selectedArtifacts);
+                    alert("Tour sent to Pepper!"); 
+                }
+            } catch (error) {
+                console.error("Failed to call /tour_retrieve", error);
+            }
+        }
+
+        let currentCommand = null;
+
+        // 1. Monitor the JSON state file for changes sent by the ROS node
+        async function watchForExternalCommands() {
+            try {
+                const response = await fetch('current_state.json', { cache: "no-store" });
+                const data = await response.json();
+                
+                if (currentCommand === null) {
+                    // First time loading the menu? Lock in the active command
+                    currentCommand = data.command;
+                } else if (data.command !== currentCommand) {
+                    // A new command came from ROS! Take the user out of the menu and back to index.html
+                    console.log("External command detected: " + data.command);
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                // Fail silently if the JSON isn't generated yet
+            }
+        }
+
+        // 2. Check every 300ms so the tablet feels highly responsive to Pepper's triggers
+        loadWaypoints();
+        setInterval(watchForExternalCommands, 300);
+    </script>
+</body>
+</html>
