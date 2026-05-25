@@ -1,4 +1,4 @@
-change " 192.168.1.100 " to server IP (laptop IP)
+change "192.168.1.100" to server IP (laptop IP)
 
 layout.html - line 158:
 
